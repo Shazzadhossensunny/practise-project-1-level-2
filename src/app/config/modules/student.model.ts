@@ -4,7 +4,7 @@ import {
   TGuardian,
   TLocalGuardian,
   TStudent,
-  StudentMethods,
+  // StudentMethods,
   StudentModel,
   TUserName,
 } from './student/student.interface';
@@ -79,8 +79,8 @@ const localGuardianSchema = new Schema<TLocalGuardian>({
     required: [true, "Local guardian's address is required"],
   },
 });
-
-const studentSchema = new Schema<TStudent, StudentModel, StudentMethods>({
+// !StudentMethods eaita bosbe custom instance hole parameter ea last ea
+const studentSchema = new Schema<TStudent, StudentModel>({
   id: {
     type: String,
     required: [true, 'Student ID is required'],
@@ -146,16 +146,23 @@ const studentSchema = new Schema<TStudent, StudentModel, StudentMethods>({
   },
 });
 
-// ! create interface methods check user exists
+//!create custom static methods check user isUserExists
+
+studentSchema.statics.isUserExists = async function (id: string) {
+  const existsUser = await Student.findOne({ id });
+  return existsUser;
+};
+
+// ! create custom instance methods check user exists
 // studentSchema.method('isUserExists', async function isUserExists(id: string) {
 //   const existsUser = await Student.findOne({ id });
 //   return existsUser;
 // });
 
-studentSchema.methods.isUserExists = async function (id: string) {
-  const existsUser = await Student.findOne({ id });
-  return existsUser;
-};
+// studentSchema.methods.isUserExists = async function (id: string) {
+//   const existsUser = await Student.findOne({ id });
+//   return existsUser;
+// };
 
 //! create a model
 
