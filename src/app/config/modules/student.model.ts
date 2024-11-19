@@ -8,6 +8,8 @@ import {
   StudentModel,
   TUserName,
 } from './student/student.interface';
+import bcrypt from 'bcrypt';
+import config from '..';
 
 // ! create Schema
 const nameSchema = new Schema<TUserName>({
@@ -86,6 +88,12 @@ const studentSchema = new Schema<TStudent, StudentModel>({
     required: [true, 'Student ID is required'],
     unique: true,
   },
+  password: {
+    type: String,
+    maxlength: [20, 'Password is not more than 20'],
+    required: [true, 'Password is required'],
+    unique: true,
+  },
   name: { type: nameSchema, required: [true, 'Student name is required'] },
   gender: {
     type: String,
@@ -145,6 +153,21 @@ const studentSchema = new Schema<TStudent, StudentModel>({
     default: 'active',
   },
 });
+
+//! using pre middleware or hooks for password hasing document
+
+studentSchema.pre('save', async function (next) {
+  const user = this;
+  user.password = await bcrypt.hash(
+    user.password,
+    Number(config.bcrypt_salt_rounds),
+  );
+  // console.log(this, 'this is pre');
+  next();
+});
+// studentSchema.post('save', function () {
+//   console.log(this, 'this is post');
+// });
 
 //!create custom static methods check user isUserExists
 
