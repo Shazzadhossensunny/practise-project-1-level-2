@@ -70,6 +70,7 @@ const studentValidateSchema = z.object({
       message: 'Status must be either "active" or "blocked"',
     }),
   }),
+  isDelete: z.boolean().default(false),
 });
 
 export default studentValidateSchema;

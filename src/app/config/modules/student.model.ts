@@ -82,79 +82,98 @@ const localGuardianSchema = new Schema<TLocalGuardian>({
   },
 });
 // !StudentMethods eaita bosbe custom instance hole parameter ea last ea
-const studentSchema = new Schema<TStudent, StudentModel>({
-  id: {
-    type: String,
-    required: [true, 'Student ID is required'],
-    unique: true,
-  },
-  password: {
-    type: String,
-    maxlength: [20, 'Password is not more than 20'],
-    required: [true, 'Password is required'],
-    unique: true,
-  },
-  name: { type: nameSchema, required: [true, 'Student name is required'] },
-  gender: {
-    type: String,
-    enum: {
-      values: ['male', 'female'],
-      message:
-        '{VALUE} is not a valid gender. Only "male" or "female" are allowed.',
+const studentSchema = new Schema<TStudent, StudentModel>(
+  {
+    id: {
+      type: String,
+      required: [true, 'Student ID is required'],
+      unique: true,
     },
-    required: [true, 'Gender is required'],
-  },
-  dateOfBirth: { type: String, required: [true, 'Date of birth is required'] },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    validate: {
-      validator: (value) => validator.isEmail(value),
-      message: '{VALUE} is not valid type email!',
+    password: {
+      type: String,
+      maxlength: [20, 'Password is not more than 20'],
+      required: [true, 'Password is required'],
+    },
+    name: { type: nameSchema, required: [true, 'Student name is required'] },
+    gender: {
+      type: String,
+      enum: {
+        values: ['male', 'female'],
+        message:
+          '{VALUE} is not a valid gender. Only "male" or "female" are allowed.',
+      },
+      required: [true, 'Gender is required'],
+    },
+    dateOfBirth: {
+      type: String,
+      required: [true, 'Date of birth is required'],
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      validate: {
+        validator: (value) => validator.isEmail(value),
+        message: '{VALUE} is not valid type email!',
+      },
+    },
+    contactNo: { type: String, required: [true, 'Contact number is required'] },
+    emergencyCOntactNo: {
+      type: String,
+      required: [true, 'Emergency contact number is required'],
+    },
+    bloodGroup: {
+      type: String,
+      enum: {
+        values: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'],
+        message: '{VALUE} is not a valid blood group',
+      },
+    },
+    presentAddress: {
+      type: String,
+      required: [true, 'Present address is required'],
+    },
+    permanentAddress: {
+      type: String,
+      required: [true, 'Permanent address is required'],
+    },
+    guardian: {
+      type: guardianSchema,
+      required: [true, 'Guardian information is required'],
+    },
+    localGuardian: {
+      type: localGuardianSchema,
+      required: [true, 'Local guardian information is required'],
+    },
+    profileImg: { type: String },
+    isActive: {
+      type: String,
+      enum: {
+        values: ['active', 'blocked'],
+        message:
+          '{VALUE} is not a valid status. Only "active" or "blocked" are allowed.',
+      },
+      default: 'active',
+    },
+    isDelete: {
+      type: Boolean,
+      default: false,
     },
   },
-  contactNo: { type: String, required: [true, 'Contact number is required'] },
-  emergencyCOntactNo: {
-    type: String,
-    required: [true, 'Emergency contact number is required'],
-  },
-  bloodGroup: {
-    type: String,
-    enum: {
-      values: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'],
-      message: '{VALUE} is not a valid blood group',
+  {
+    toJSON: {
+      virtuals: true,
     },
   },
-  presentAddress: {
-    type: String,
-    required: [true, 'Present address is required'],
-  },
-  permanentAddress: {
-    type: String,
-    required: [true, 'Permanent address is required'],
-  },
-  guardian: {
-    type: guardianSchema,
-    required: [true, 'Guardian information is required'],
-  },
-  localGuardian: {
-    type: localGuardianSchema,
-    required: [true, 'Local guardian information is required'],
-  },
-  profileImg: { type: String },
-  isActive: {
-    type: String,
-    enum: {
-      values: ['active', 'blocked'],
-      message:
-        '{VALUE} is not a valid status. Only "active" or "blocked" are allowed.',
-    },
-    default: 'active',
-  },
+);
+
+// ! virtual mongoose jodi kokhono dorkar hoy je kono data sudhu matro clint ea dekhno db te dorkar nai tokhon vitrual use korte hoy jemon fullname
+
+studentSchema.virtual('fullname').get(function () {
+  return `${this.name.firstName} ${this.name.middleName} ${this.name.lastName}`;
 });
 
-//! using pre middleware or hooks for password hasing document
+//! using pre & post middleware or hooks for password hasing called document middleware
 
 studentSchema.pre('save', async function (next) {
   const user = this;
@@ -165,9 +184,29 @@ studentSchema.pre('save', async function (next) {
   // console.log(this, 'this is pre');
   next();
 });
-// studentSchema.post('save', function () {
-//   console.log(this, 'this is post');
-// });
+studentSchema.post('save', function (doc, next) {
+  doc.password = '';
+
+  // console.log(this, 'this is post');
+  next();
+});
+
+//! using pre & post middleware or hooks for delete called query middleware
+studentSchema.pre('find', function (next) {
+  this.find({ isDelete: { $ne: true } });
+  next();
+});
+
+studentSchema.pre('findOne', function (next) {
+  this.findOne({ isDelete: { $ne: true } });
+  next();
+});
+
+studentSchema.pre('aggregate', function (next) {
+  this.pipeline().unshift({ $match: { isDelete: { $ne: true } } });
+
+  next();
+});
 
 //!create custom static methods check user isUserExists
 
